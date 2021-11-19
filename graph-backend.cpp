@@ -28,7 +28,7 @@ class Graph
 	Graph();
 	~Graph();
 	//====Getters and Setters====
-
+	unsigned int numVertices();
 	//====Insertion and Deletion====
 
 	//====Standard Algorithms====
