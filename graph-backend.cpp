@@ -1,10 +1,12 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 using namespace std;
 
 class User
 {
+public:
 	static int numUsers;
 	string name;
 	string userID;
@@ -18,21 +20,28 @@ class User
 class Graph
 {
 	unsigned int numVertices;
-	unordered_map<User, vector<User>> adjList;
+	unordered_map<string, User*> lookupID;
 
+	/*
+	Graph is implemented using an adjacency list that stores pointers to each user.
+	unordered_set used for easy find(), no repeats allowed 
+	*/
+	unordered_map<User*, unordered_set<User*>> adjList;
 
+public:
 	//====Creation and Destruction====
 	Graph();
-	~Graph();
 	//====Getters and Setters====
-	unsigned int numVertices() { return numVertices; };
+	unsigned int Vertices() { return numVertices; };
 	//====Insertion and Deletion====
+	bool insertVertex(User& user);
+	bool insertEdge(User& user1, User& user2); //could add a friendship factor (0-1) for Dijktras...?
 
 	//====Standard Algorithms====
 
 };
 
-//==================CREATION AND DESTRUCTION=================================
+/*USER==================CREATION AND DESTRUCTION=================================*/
 User::User()
 {
 	name = "";
@@ -50,3 +59,52 @@ string User::makeID(int num)
 	return to_string(num); //Will probably be changed later based on needs
 }
 int User::numUsers = 0;
+
+/*GRAPH===================CREATION AND DETRUCTION==============================*/
+Graph::Graph()
+{
+	numVertices = 0;
+}
+
+/*GRAPH=====================INSERTION AND DELETION==============================*/
+bool Graph::insertVertex(User& user)
+{
+	if (lookupID.find(user.userID) != lookupID.end())
+	{
+		return false; //user already in graph
+	}
+	else
+	{
+		lookupID[user.userID] = &user;
+		numVertices++;
+		return true;
+	}
+}
+bool Graph::insertEdge(User& user1, User& user2)
+{
+	if (adjList[&user1].find(&user2) != adjList[&user1].end() && adjList[&user2].find(&user1) != adjList[&user2].end())
+	{
+		return false; //edge already exists
+	}
+	else
+	{
+		insertVertex(user1);
+		insertVertex(user2);
+		adjList[&user1].insert(&user2);
+		adjList[&user2].insert(&user1);
+		return true;
+	}
+		// addd two vertices to graph
+		// add edge to adj list
+}
+int main()
+{
+	Graph theg;
+	User user1("Allen", 20);
+	User user2("Logan", 21);
+	User user3("Jake", 19);
+	theg.insertEdge(user1, user2);
+	theg.insertEdge(user2, user3);
+	theg.insertEdge(user1, user3);
+	return 0;
+}
