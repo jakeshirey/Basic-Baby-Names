@@ -31,7 +31,7 @@ class Graph
 
 	/*
 	Graph is implemented using an adjacency list that stores pointers to each user.
-	unordered_set used for easy find(), no repeats allowed 
+	unordered_map used for easy find(), no repeats allowed 
 	*/
 	unordered_map<User*, unordered_map<User*, double>> adjList;
 
@@ -48,7 +48,7 @@ public:
 	bool insertEdge(User& user1, User& user2, double friendFactor); //could add a friendship factor (0-1) for Dijktras...?
 
 	//====Standard Algorithms====
-	User* breadthFirstSearch(string target, User& source, unsigned int maxDepth);
+	pair<User*, unsigned int> breadthFirstSearch(string target, User& source, unsigned int maxDepth);
 
 	//Perhaps a highest friendship factor search to find good names?
 };
@@ -148,14 +148,15 @@ bool Graph::insertEdge(User& user1, User& user2, double friendFactor)
 
 /*This algorithm conducts a breadth first search for a target name, starting from source (usually yourself),
 * up to maxDepth connections deep. Users further from the source than maxDepth are ignored. */
-User* Graph::breadthFirstSearch(string target, User& source, unsigned int maxDepth)
+pair<User*, unsigned int> Graph::breadthFirstSearch(string target, User& source, unsigned int maxDepth)
 {
 	unordered_set<User*> touched; //tracks vertices that have already been hit by the traversal
 	queue<pair<User*, unsigned int>> q; //tracks nodes that need to be analyzed next, second value tracks depth of node
 	q.push(make_pair(&source, 0));
 	while (!q.empty())
 	{
-		//cout << q.front() << " ";
+		if (q.front().first->name == target)
+			return q.front();
 		touched.insert(q.front().first);
 		auto adjacent = adjList[q.front().first];
 		unsigned int depthOfNode = q.front().second;
