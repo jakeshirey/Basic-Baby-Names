@@ -8,26 +8,39 @@ using namespace std;
 
 int main()
 {
+    const int SCRWIDTH = 3000;
+    const int SCRHEIGHT = 1900;
+    sf::RenderWindow window(sf::VideoMode(SCRWIDTH, SCRHEIGHT), "SFML works!");
 
-    sf::RenderWindow window(sf::VideoMode(2000, 1000), "SFML works!");
-    sf::CircleShape shape(100.f);
-    shape.setFillColor(sf::Color::Red);
-    sf::Texture texture;
-    if (!texture.loadFromFile("62385935049__70550DCE-858C-4B6F-9C8B-91CB589CEB26.jpeg"))
-        return EXIT_FAILURE;
-    sf::Sprite sprite(texture);
+
+
+    sf::Texture boyTexture;
+    boyTexture.loadFromFile("boyBaby.png");
+    sf::Sprite boy(boyTexture);
+    sf::Vector2u size = boyTexture.getSize();
+    cout << size.x;
+    boy.setOrigin(0,0);
+    boy.setPosition(SCRWIDTH-(size.x/2),SCRHEIGHT-(size.y/2));
+    boy.setScale(0.5f, 0.5);
+
+    sf::Texture girlTexture;
+    girlTexture.loadFromFile("girlBaby.png");
+    sf::Sprite girl(girlTexture);
+    sf::Vector2u size2 = girlTexture.getSize();
+    cout << size2.x;
+    girl.setOrigin(0,0);
+    girl.setPosition(0,SCRHEIGHT-(size2.y/2));
+    girl.setScale(0.5f, 0.5);
+
     sf::Font font;
     font.loadFromFile("28744608880.ttf");
     sf::Text text("Welcome to Basic Baby Names", font);
-    text.setColor(sf::Color::Blue);
-    text.setCharacterSize(80);
-    const int SCRWIDTH = 2000;
-    const int SCRHEIGHT = 200;
+    sf::Color color(100, 100, 255);
+    text.setColor(color);
+    text.setCharacterSize(150);
     sf::FloatRect textRect = text.getLocalBounds();
-    text.setOrigin(textRect.width/2,textRect.height/2);
+    text.setOrigin(textRect.width/2,textRect.height);
     text.setPosition(sf::Vector2f(SCRWIDTH/2.0f,SCRHEIGHT/2.0f));
-
-
 
 
     while (window.isOpen())
@@ -39,15 +52,12 @@ int main()
                 window.close();
         }
 
-        window.clear();
-
-        window.draw(sprite);
-        window.draw(shape);
+        window.clear(sf::Color(255, 200, 255, 255));
+        window.draw(boy);
+        window.draw(girl);
         window.draw(text);
         window.display();
     }
 
     return 0;
 }
-
-
