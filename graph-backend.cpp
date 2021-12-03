@@ -1,7 +1,13 @@
+//Input, Output, Strings
 #include <iostream>
-#include <vector>
 #include <string>
+
+//STL Data Containers
 #include <unordered_map>
+#include <unordered_set>
+#include <queue>
+#include <vector>
+#include <stack>
 using namespace std;
 
 class User
@@ -21,6 +27,7 @@ class Graph
 {
 	unsigned int numVertices;
 	unordered_map<string, User*> lookupID;
+	// possible a "You" User* variable, for whom the program works on primarily
 
 	/*
 	Graph is implemented using an adjacency list that stores pointers to each user.
@@ -41,7 +48,8 @@ public:
 	bool insertEdge(User& user1, User& user2, double friendFactor); //could add a friendship factor (0-1) for Dijktras...?
 
 	//====Standard Algorithms====
-	//BFS to find if name exists
+	User* breadthFirstSearch(string target, User& source, unsigned int maxDepth);
+
 	//Perhaps a highest friendship factor search to find good names?
 };
 
@@ -135,7 +143,36 @@ bool Graph::insertEdge(User& user1, User& user2, double friendFactor)
 		return true;
 	}
 }
-// IGNORE BELOW, USED FOR TESTING========================================================================================
+
+/*=======================STANDARD ALGORITHMS====================================*/
+
+/*This algorithm conducts a breadth first search for a target name, starting from source (usually yourself),
+* up to maxDepth connections deep. Users further from the source than maxDepth are ignored. */
+User* Graph::breadthFirstSearch(string target, User& source, unsigned int maxDepth)
+{
+	unordered_set<User*> touched; //tracks vertices that have already been hit by the traversal
+	queue<pair<User*, unsigned int>> q; //tracks nodes that need to be analyzed next, second value tracks depth of node
+	q.push(make_pair(&source, 0));
+	while (!q.empty())
+	{
+		//cout << q.front() << " ";
+		touched.insert(q.front().first);
+		auto adjacent = adjList[q.front().first];
+		unsigned int depthOfNode = q.front().second;
+		if (depthOfNode < maxDepth) //do not add further vertices if we are already at maxDepth
+		{
+			for (auto it = adjacent.begin(); it != adjacent.end(); ++it) //for each item in this nodes adjacency list
+			{
+				if (touched.find((*it).first) == touched.end())
+				{
+					q.push(make_pair((*it).first, depthOfNode + 1));
+					touched.insert((*it).first);
+				}
+			}
+		}
+		q.pop();
+	}
+}
 int main()
 {
 	Graph theg;
