@@ -135,6 +135,7 @@ bool Graph::insertEdge(User& user1, User& user2, double friendFactor)
 		return true;
 	}
 }
+// IGNORE BELOW, USED FOR TESTING========================================================================================
 int main()
 {
 	Graph theg;
