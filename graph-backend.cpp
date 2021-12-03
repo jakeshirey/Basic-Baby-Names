@@ -147,7 +147,8 @@ bool Graph::insertEdge(User& user1, User& user2, double friendFactor)
 /*=======================STANDARD ALGORITHMS====================================*/
 
 /*This algorithm conducts a breadth first search for a target name, starting from source (usually yourself),
-* up to maxDepth connections deep. Users further from the source than maxDepth are ignored. */
+* up to maxDepth connections deep. Users further from the source than maxDepth are ignored.
+* Returns a pair with the target, and the number of connections from the source */
 pair<User*, unsigned int> Graph::breadthFirstSearch(string target, User& source, unsigned int maxDepth)
 {
 	unordered_set<User*> touched; //tracks vertices that have already been hit by the traversal
@@ -173,6 +174,7 @@ pair<User*, unsigned int> Graph::breadthFirstSearch(string target, User& source,
 		}
 		q.pop();
 	}
+	return make_pair(nullptr, 0); //no user with name found
 }
 int main()
 {
