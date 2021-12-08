@@ -1,9 +1,11 @@
-//Input, Output, Strings
+//Misc
 #include <iostream>
 #include <string>
+#include <algorithm>
 
 //STL Data Containers
 #include <unordered_map>
+#include <map>
 #include <unordered_set>
 #include <queue>
 #include <vector>
@@ -177,6 +179,9 @@ pair<User*, unsigned int> Graph::breadthFirstSearch(string target, User& source,
 	return make_pair(nullptr, 0); //no user with name found
 }
 
+// used by sort function in dijkstra to sort the distances
+bool pairCompareFc(pair<User*, double> i, pair<User*, double> j) { return (i.second < j.second); }
+
 /*This algorithm returns a sorted list of users by shortest path (sum of friendship factors) to the source.*/
 vector<pair<User*, double>> Graph::dijkstra(User& source)
 {
@@ -185,14 +190,14 @@ vector<pair<User*, double>> Graph::dijkstra(User& source)
 	unordered_map<User*, double> d;
 	//vector<double> d(numVertices, INT_MAX);
 	unordered_map<User*, User*> p; //predecessor
-	unordered_set<User*> computed;
-	unordered_set<User*> notComputed;
+	//unordered_set<User*> computed;
+	//unordered_set<User*> notComputed;
 	//add all vertices to notComputed and update map to set all vertices to infinity
-	for (auto it = lookupID.begin(); it != lookupID.end(); ++it)
-	{
-		notComputed.insert((*it).second);
-		d.insert(make_pair((*it).second, INFINITY));
-	}
+	//for (auto it = lookupID.begin(); it != lookupID.end(); ++it)
+	//{
+	//	notComputed.insert((*it).second);
+	//	d.insert(make_pair((*it).second, INFINITY));
+	//}
 	//Process the source
 	pq.push(make_pair(0, &source));
 	p[&source] = nullptr;
@@ -209,13 +214,13 @@ vector<pair<User*, double>> Graph::dijkstra(User& source)
 			if (k.second + d[v.second] < d[k.first])
 			{
 				d[k.first] = k.second + d[v.second];
-				p[k.first] = v.second;
-				//pq.push(make_pair(k.second + d[v.second], ))
+				p[k.first] = v.second; //update predecessor
+				pq.push(make_pair(k.second + d[v.second], k.first));
 			}
 		}
 		//cout << v << endl;
-		computed.insert(v.second);
-		notComputed.erase(v.second);
+		//computed.insert(v.second);
+		//notComputed.erase(v.second);
 		//for (auto it = notComputed.begin(); it != notComputed.end(); ++it)
 		//{
 		//    cout << *it << " ";
@@ -223,14 +228,19 @@ vector<pair<User*, double>> Graph::dijkstra(User& source)
 		//cout << endl;
 	}
 
-	// sort and iterate
-	return d;
+	// sort and iterate O(n + nlog(n))
+	vector<pair<User*, double>> retVec;
+	for (auto it = d.begin(); it != d.end(); ++it)
+		retVec.push_back(make_pair((*it).first, (*it).second));
+	std::sort(retVec.begin(), retVec.end(), pairCompareFc);
+	return retVec;
 }
+
 int main()
 {
 	Graph theg;
 	User user1("Allen", 20);
-	User user2(A"Logan", 21);
+	User user2("Logan", 21);
 	User user3("Jake", 19);
 	theg.insertEdge(user1, user2, 1);
 	theg.insertEdge(user2, user3, 2);
