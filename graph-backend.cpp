@@ -193,11 +193,10 @@ vector<pair<User*, double>> Graph::dijkstra(User& source)
 	//unordered_set<User*> computed;
 	//unordered_set<User*> notComputed;
 	//add all vertices to notComputed and update map to set all vertices to infinity
-	//for (auto it = lookupID.begin(); it != lookupID.end(); ++it)
-	//{
-	//	notComputed.insert((*it).second);
-	//	d.insert(make_pair((*it).second, INFINITY));
-	//}
+	for (auto it = lookupID.begin(); it != lookupID.end(); ++it)
+	{
+		d.insert(make_pair((*it).second, INFINITY));
+	}
 	//Process the source
 	pq.push(make_pair(0, &source));
 	p[&source] = nullptr;
@@ -239,14 +238,36 @@ vector<pair<User*, double>> Graph::dijkstra(User& source)
 int main()
 {
 	Graph theg;
-	User user1("Allen", 20);
-	User user2("Logan", 21);
-	User user3("Jake", 19);
-	theg.insertEdge(user1, user2, 1);
-	theg.insertEdge(user2, user3, 2);
-	theg.insertEdge(user1, user3, 3);
-	auto l = theg.getAdjacent(user1);
-	for (unsigned int i = 0; i < l.size(); i++)
-		 cout << l.at(i)->name << std::endl;
+	//Verts
+	User A("A", 1);
+	User B("B", 1);
+	User C("C", 1);
+	User D("D", 1);
+	User E("E", 1);
+	User F("F", 1);
+	User G("G", 1);
+	User H("H", 1);
+	User I("I", 1);
+	//Edges
+	theg.insertEdge(A, B, 4);
+	theg.insertEdge(A, H, 8);
+	theg.insertEdge(B, H, 11);
+	theg.insertEdge(B, C, 8);
+	theg.insertEdge(C, D, 7);
+	theg.insertEdge(C, F, 4);
+	theg.insertEdge(C, I, 2);
+	theg.insertEdge(D, E, 9);
+	theg.insertEdge(D, F, 14);
+	theg.insertEdge(E, F, 10);
+	theg.insertEdge(F, G, 2);
+	theg.insertEdge(G, H, 1);
+	theg.insertEdge(G, I, 6);
+	theg.insertEdge(H, I, 7);
+	//Algo
+	auto vec = theg.dijkstra(A);
+	for (unsigned int i = 0; i < vec.size(); i++)
+	{
+		cout << vec.at(i).first->name << ": " << vec.at(i).second << endl;
+	}
 	return 0;
 }
