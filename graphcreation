@@ -1,0 +1,55 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <iterator>
+#include <limits>
+#include <stdio.h>
+#include <stdlib.h>
+#include <cstdlib>
+#include <ctime>
+#include "graph-backend.h"
+#include <string>
+
+fstream& GotoLine(fstream& file, unsigned int num)
+{
+    file.seekg(ios::beg);
+    for (int i = 0; i < num - 1; ++i)
+    {
+        file.ignore(numeric_limits<streamsize>::max(),'\n');
+    }
+    return file;
+}
+
+int main() {
+    using namespace std;
+
+    // initialize graph and vector objects
+    Graph randomGraph;
+    string nameFromList;
+    User userFromList;
+    vector<User> userList;
+    unsigned int randomLine;
+
+    string line;
+    fstream myfile("/Users/rachelfenton/Desktop/Names.txt");
+    // check that file path makes sense for this computer
+
+    for (int i = 0; i < 100000; i++)
+    {
+        randomLine = rand() % 21984 + 1;
+        GotoLine(myfile, randomLine); // visit a random line in the file
+        myfile >> nameFromList; // get the name there
+        userFromList.name = nameFromList;
+        userFromList.age = 2; // random
+
+        userList.push_back(userFromList);
+    }
+
+    for (int i = 0; i < 100000; i++)
+    {
+        randomGraph.insertVertex(userList[i]);
+    }
+
+    return 0;
+
+}
