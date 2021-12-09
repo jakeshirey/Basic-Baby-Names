@@ -1,0 +1,935 @@
+#include <iterator>
+#include <limits>
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <stdlib.h>
+#include <string>
+#include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
+#include <sstream>
+#include <algorithm>
+#include <unordered_map>
+#include <unordered_set>
+#include <queue>
+#include <stack>
+
+using namespace std;
+
+// Define keys:
+#define DELETE_KEY 8
+#define ENTER_KEY 13
+#define ESCAPE_KEY 27
+
+class Textbox {
+public:
+    Textbox(int size, sf::Color color, bool sel) {
+        textbox.setCharacterSize(size);
+        textbox.setColor(color);
+        isSelected = sel;
+
+        // Check if the textbox is selected upon creation and display it accordingly:
+        if(isSelected)
+            textbox.setString("_");
+        else
+            textbox.setString("");
+    }
+
+    // Make sure font is passed by reference:
+    void setFont(sf::Font &fonts) {
+        textbox.setFont(fonts);
+    }
+
+    void setPosition(sf::Vector2f point) {
+        textbox.setPosition(point);
+    }
+
+    // Set char limits:
+    void setLimit(bool ToF) {
+        hasLimit = ToF;
+    }
+
+    void setLimit(bool ToF, int lim) {
+        hasLimit = ToF;
+        limit = lim - 1;
+    }
+
+    // Change selected state:
+    void setSelected(bool sel) {
+        isSelected = sel;
+
+        // If not selected, remove the '_' at the end:
+        if (!sel) {
+            std::string t = text.str();
+            std::string newT = "";
+            for (int i = 0; i < t.length(); i++) {
+                newT += t[i];
+            }
+            textbox.setString(newT);
+        }
+    }
+
+    std::string getText() {
+        return text.str();
+    }
+
+    void drawTo(sf::RenderWindow &window) {
+        window.draw(textbox);
+    }
+
+    // Function for event loop:
+    void typedOn(sf::Event input) {
+        if (isSelected) {
+            int charTyped = input.text.unicode;
+
+            // Only allow normal inputs:
+            if (charTyped < 128) {
+                if (hasLimit) {
+                    // If there's a limit, don't go over it:
+                    if (text.str().length() <= limit) {
+                        inputLogic(charTyped);
+                    }
+                        // But allow for char deletions:
+                    else if (text.str().length() > limit && charTyped == DELETE_KEY) {
+                        deleteLastChar();
+                    }
+                }
+                    // If no limit exists, just run the function:
+                else {
+                    inputLogic(charTyped);
+                }
+            }
+        }
+    }
+private:
+    sf::Text textbox;
+
+    std::ostringstream text;
+    bool isSelected = false;
+    bool hasLimit = false;
+    int limit = 0;
+
+    // Delete the last character of the text:
+    void deleteLastChar() {
+        std::string t = text.str();
+        std::string newT = "";
+        for (int i = 0; i < t.length() - 1; i++) {
+            newT += t[i];
+        }
+        text.str("");
+        text << newT;
+        textbox.setString(text.str() + "_");
+    }
+
+    // Get user input:
+    void inputLogic(int charTyped) {
+        // If the key pressed isn't delete, or the two selection keys, then append the text with the char:
+        if (charTyped != DELETE_KEY && charTyped != ENTER_KEY && charTyped != ESCAPE_KEY) {
+            text << static_cast<char>(charTyped);
+        }
+            // If the key is delete, then delete the char:
+        else if (charTyped == DELETE_KEY) {
+            if (text.str().length() > 0) {
+                deleteLastChar();
+            }
+        }
+        // Set the textbox text:
+        textbox.setString(text.str() + "_");
+    }
+};
+class Button {
+public:
+    Button(std::string btnText, sf::Vector2f buttonSize, int charSize, sf::Color bgColor, sf::Color textColor) {
+        button.setSize(buttonSize);
+        button.setFillColor(bgColor);
+
+        // Get these for later use:
+        btnWidth = buttonSize.x;
+        btnHeight = buttonSize.y;
+
+        text.setString(btnText);
+        text.setCharacterSize(charSize);
+        text.setColor(textColor);
+    }
+
+    // Pass font by reference:
+    void setFont(sf::Font &fonts) {
+        text.setFont(fonts);
+    }
+
+    void setBackColor(sf::Color color) {
+        button.setFillColor(color);
+    }
+
+    void setTextColor(sf::Color color) {
+        text.setColor(color);
+    }
+
+    void setPosition(sf::Vector2f point) {
+        button.setPosition(point);
+
+        // Center text on button:
+        float xPos = (point.x + btnWidth / 2) - (text.getLocalBounds().width / 2);
+        float yPos = (point.y + btnHeight / 2.2) - (text.getLocalBounds().height / 2);
+        text.setPosition(xPos, yPos);
+    }
+
+    void drawTo(sf::RenderWindow &window) {
+        window.draw(button);
+        window.draw(text);
+    }
+
+    // Check if the mouse is within the bounds of the button:
+    bool isMouseOver(sf::RenderWindow &window) {
+        int mouseX = sf::Mouse::getPosition(window).x;
+        int mouseY = sf::Mouse::getPosition(window).y;
+
+        int btnPosX = button.getPosition().x;
+        int btnPosY = button.getPosition().y;
+
+        int btnxPosWidth = button.getPosition().x + btnWidth;
+        int btnyPosHeight = button.getPosition().y + btnHeight;
+
+        if (mouseX < btnxPosWidth && mouseX > btnPosX && mouseY < btnyPosHeight && mouseY > btnPosY) {
+            return true;
+        }
+        return false;
+    }
+private:
+    sf::RectangleShape button;
+    sf::Text text;
+
+    int btnWidth;
+    int btnHeight;
+};
+
+string BFSFunction(string name);
+string DJKFunction();
+
+fstream& GotoLine(fstream& file, unsigned int num)
+{
+    file.seekg(ios::beg);
+    for (int i = 0; i < num - 1; ++i)
+    {
+        file.ignore(numeric_limits<streamsize>::max(),'\n');
+    }
+    return file;
+}
+
+class User
+{
+public:
+    static int numUsers;
+    string name;
+    string userID;
+    unsigned int age;
+
+    //====Creation and Destruction====
+    User();
+    User(string _name, int _age);
+    static string makeID(int num);
+};
+class Graph
+{
+    unsigned int numVertices;
+    /*
+    Graph is implemented using an adjacency list that stores pointers to each user.
+    unordered_map used for easy find(), no repeats allowed
+    */
+    unordered_map<User*, unordered_map<User*, double>> adjList;
+
+public:
+    //"You" User* variable, for whom the program works on primarily
+    User* you; //public so that outside fcs know who "you" is
+
+    //====Creation and Destruction====
+    Graph();
+    //====Getters and Setters====
+    unsigned int Vertices() { return numVertices; };
+    bool isEdge(User& user1, User& user2);
+    vector<User*> getAdjacent(User& user);
+    double FriendFactor(User& user1, User& user2);
+    //====Insertion and Deletion====
+    bool insertVertex(User& user);
+    bool insertEdge(User& user1, User& user2, double friendFactor); //could add a friendship factor (0-1) for Dijktras...?
+
+    //====Standard Algorithms====
+    pair<User*, unsigned int> breadthFirstSearch(string target, User& source, unsigned int maxDepth);
+    vector<pair<User*, double>> dijkstra(User& source);
+    //Perhaps a highest friendship factor search to find good names
+    unordered_map<string, User*> lookupID;
+};
+
+User::User()
+{
+    name = "";
+    age = -1;
+    numUsers++;
+    userID = makeID(numUsers);
+}
+User::User(string _name, int _age)
+{
+    name = _name;
+    age = _age;
+    numUsers++;
+    userID = makeID(numUsers);
+}
+string User::makeID(int num)
+{
+    return to_string(num); //Will probably be changed later based on needs
+}
+int User::numUsers = 0;
+
+/*GRAPH===================CREATION AND DETRUCTION==============================*/
+Graph::Graph()
+{
+    numVertices = 0;
+    you = nullptr;
+}
+
+/*GRAPH=====================GETTERS AND SETTERS=================================*/
+bool Graph::isEdge(User& user1, User& user2) //asssumes vertices are valid, could change
+{
+    if (adjList[&user1].find(&user2) != adjList[&user1].end() && adjList[&user2].find(&user1) != adjList[&user2].end())
+    {
+        return true; //edge already exists
+    }
+    else
+        return false;
+}
+double Graph::FriendFactor(User& user1, User& user2)
+{
+    if (this->isEdge(user1, user2))
+    {
+        return adjList[&user1].at(&user2);
+    }
+    else
+        return 0;
+}
+vector<User*> Graph::getAdjacent(User& user)
+{
+    if (lookupID.find(user.userID) != lookupID.end())
+    {
+        vector<User*> retVec;
+        for (auto it = adjList[&user].begin(); it != adjList[&user].end(); ++it)
+        {
+            retVec.push_back((*it).first);
+        }
+        return retVec;
+    }
+    else
+        return vector<User*>();
+}
+
+/*GRAPH=====================INSERTION AND DELETION==============================*/
+bool Graph::insertVertex(User& user)
+{
+    if (lookupID.find(user.userID) != lookupID.end())
+    {
+        return false; //user already in graph
+    }
+    else
+    {
+        lookupID[user.userID] = &user;
+        numVertices++;
+        return true;
+    }
+}
+bool Graph::insertEdge(User& user1, User& user2, double friendFactor)
+{
+    if (this->isEdge(user1, user2))
+    {
+        return false; //edge already exists
+    }
+    else
+    {
+        // add two vertices to graph
+        // add edge to adj list
+        insertVertex(user1);
+        insertVertex(user2);
+        adjList[&user1].emplace(&user2, friendFactor);
+        adjList[&user2].emplace(&user1, friendFactor);
+        return true;
+    }
+}
+
+/*=======================STANDARD ALGORITHMS====================================*/
+
+/*This algorithm conducts a breadth first search for a target name, starting from source (usually yourself),
+* up to maxDepth connections deep. Users further from the source than maxDepth are ignored.
+* Returns a pair with the target, and the number of connections from the source */
+pair<User*, unsigned int> Graph::breadthFirstSearch(string target, User& source, unsigned int maxDepth)
+{
+    unordered_set<User*> touched; //tracks vertices that have already been hit by the traversal
+    queue<pair<User*, unsigned int>> q; //tracks nodes that need to be analyzed next, second value tracks depth of node
+    q.push(make_pair(&source, 0));
+    while (!q.empty())
+    {
+        if (q.front().first->name == target)
+            return q.front();
+        touched.insert(q.front().first);
+        auto adjacent = adjList[q.front().first];
+        unsigned int depthOfNode = q.front().second;
+        if (depthOfNode < maxDepth) //do not add further vertices if we are already at maxDepth
+        {
+            for (auto it = adjacent.begin(); it != adjacent.end(); ++it) //for each item in this nodes adjacency list
+            {
+                if (touched.find((*it).first) == touched.end())
+                {
+                    q.push(make_pair((*it).first, depthOfNode + 1));
+                    touched.insert((*it).first);
+                }
+            }
+        }
+        q.pop();
+    }
+    return make_pair(nullptr, 0); //no user with name found
+}
+
+// used by sort function in dijkstra to sort the distances
+bool pairCompareFc(pair<User*, double> i, pair<User*, double> j) { return (i.second < j.second); }
+
+/*This algorithm returns a sorted list of users by shortest path (sum of friendship factors) to the source.*/
+vector<pair<User*, double>> Graph::dijkstra(User& source)
+{
+    // Four main data structures to solve problem
+    priority_queue<pair<double, User*>, vector<pair<double, User*>>, greater<pair<double, User*>>> pq; //distance to source
+    unordered_map<User*, double> d;
+    //vector<double> d(numVertices, INT_MAX);
+    unordered_map<User*, User*> p; //predecessor
+    //unordered_set<User*> computed;
+    //unordered_set<User*> notComputed;
+    //add all vertices to notComputed and update map to set all vertices to infinity
+    for (auto it = lookupID.begin(); it != lookupID.end(); ++it)
+    {
+        d.insert(make_pair((*it).second, INFINITY));
+    }
+    //Process the source
+    pq.push(make_pair(0, &source));
+    p[&source] = nullptr;
+    d[&source] = 0;
+
+    //main iterative loop
+    while (!pq.empty())
+    {
+        auto v = pq.top();
+        pq.pop();
+        //relax all adjacent vertices //check this ->
+        for (auto k : adjList.at(v.second))
+        {
+            if (k.second + d[v.second] < d[k.first])
+            {
+                d[k.first] = k.second + d[v.second];
+                p[k.first] = v.second; //update predecessor
+                pq.push(make_pair(k.second + d[v.second], k.first));
+            }
+        }
+        //cout << v << endl;
+        //computed.insert(v.second);
+        //notComputed.erase(v.second);
+        //for (auto it = notComputed.begin(); it != notComputed.end(); ++it)
+        //{
+        //    cout << *it << " ";
+        //}
+        //cout << endl;
+    }
+
+    // sort and iterate O(n + nlog(n))
+    vector<pair<User*, double>> retVec;
+    for (auto it = d.begin(); it != d.end(); ++it)
+        retVec.push_back(make_pair((*it).first, (*it).second));
+    std::sort(retVec.begin(), retVec.end(), pairCompareFc);
+    return retVec;
+}
+
+int main() {
+
+    bool bfs = false;
+    bool djk = false;
+    bool enterPressed = false;
+    bool one_ = false;
+    bool two_ = false;
+    bool three_ = false;
+    bool four_ = false;
+    bool five_ = false;
+    string input;
+    string optionChosen = "";
+    string output = "";
+    string numberChosen = "";
+    Graph randomGraph;
+
+    string nameFromList;
+
+    vector<User> userList;
+    unsigned int randomLine;
+
+    string line;
+    fstream myfile("/Users/rachelfenton/Desktop/Names2.txt");
+    // check that file path makes sense for this computer
+
+    for (int i = 0; i < 100000; i++) {
+        User userFromList;
+        randomLine = rand() % 21984 + 1;
+
+        GotoLine(myfile, randomLine); // visit a random line in the file
+        myfile >> nameFromList; // get the name there
+        userFromList.name = nameFromList;
+        userFromList.age = 2; // random
+
+        userList.push_back(userFromList);
+    }
+
+    for (int i = 0; i < userList.size(); i++) {
+        randomGraph.insertVertex(userList[i]);
+    }
+
+    for (int iter = 0; iter < userList.size(); iter++) {
+        // not themselves
+        // not duplicates
+        for (int i = 0; i < 5; i++) {
+            int friendID = rand() % 99999;
+            double friendFact = rand() % 9 + 1;
+            if (&userList.at(friendID) != &userList.at(iter)) {
+                randomGraph.insertEdge(userList.at(iter), userList.at(friendID), friendFact);
+            }
+        }
+
+    }
+    randomGraph.you = new User("NULL_NAME", 69);
+    for (int i = 0; i < 5; i++) {
+        int friendID = rand() % 99999;
+        double friendFact = rand() % 9 + 1;
+        User theirFriend = userList.at(friendID);
+        if (&theirFriend != randomGraph.you) {
+            randomGraph.insertEdge(*(randomGraph.you), theirFriend, friendFact);
+        }
+    }
+
+    //WINDOW
+    sf::RenderWindow window;
+    const int SCRWIDTH = sf::VideoMode::getDesktopMode().width;
+    const int SCRHEIGHT = sf::VideoMode::getDesktopMode().height;
+    sf::Vector2i centerWindow(300, 100);
+    window.create(sf::VideoMode(SCRWIDTH-400, SCRHEIGHT-400), "Basic Baby Names", sf::Style::Titlebar | sf::Style::Close);
+    window.setPosition(centerWindow);
+    window.setKeyRepeatEnabled(true);
+    //FONT
+    sf::Font font;
+    if (!font.loadFromFile("28744608880.ttf"))
+        std::cout << "Font not found!\n";
+    //MENU TEXT
+    sf::Text menu("Welcome to Basic Baby Name Calculator!\n\nParents often want to avoid giving their baby a name that is too popular. "
+                  "They can look at its overall ranking/popularity in the US,\n but the names of their close friends are far more relevant. "
+                  "Even if a name is rare, we don't want to use one that belongs to our parents,\n friends, or colleagues.\n\nIn this program, "
+                  "you can select between two options that can show you information about a specific name, or show you suggestions\n for a name that isn't within your "
+                  "immediate social network.\n\nMenu Options:\n1. BFS to find the nearest instance of a given name\n\n2. Return the top 10 closest (worst) and farthest (best) "
+                  "names to you via Dijkstra's Algorithm\n\nSelect either one of the green buttons below (additionally, for option 1, enter a name in the textbox).\nThen, select the enter "
+                  "button to get the information you're looking for!", font);
+    sf::Color color(200,100,255);
+    menu.setColor(color);
+    menu.setCharacterSize(40);
+    sf::FloatRect textRect = menu.getLocalBounds();
+    menu.setOrigin(0,0);
+    menu.setPosition(sf::Vector2f(400,100));
+    //NAME INPUT TEXT BOX
+    sf::RectangleShape rect;
+    rect.setOrigin(0,0);
+    rect.setFillColor(sf::Color::White);
+    rect.setPosition({static_cast<float>((SCRWIDTH/2)-700), static_cast<float>(SCRHEIGHT-1000)});
+    rect.setSize({700,200});
+    Textbox text1(100, sf::Color::Black, true);
+    text1.setPosition({static_cast<float>((SCRWIDTH/2)-700), static_cast<float>(SCRHEIGHT-1000)});
+    text1.setLimit(true, 30);
+    text1.setFont(font);
+    //Directions for Select Option
+    sf::Text optionDirections("Step 1: Select an Option", font);
+    optionDirections.setColor(sf::Color::Black);
+    optionDirections.setCharacterSize(40);
+    optionDirections.setOrigin(0,0);
+    optionDirections.setPosition(sf::Vector2f(static_cast<float>((SCRWIDTH/2)-500),static_cast<float>(SCRHEIGHT-1250)));
+    //Current option selected
+    sf::Text option("Current Option Selected: none", font);
+    option.setColor(sf::Color::Red);
+    option.setCharacterSize(40);
+    option.setOrigin(0,0);
+    option.setPosition(sf::Vector2f(static_cast<float>((SCRWIDTH/2)-600),static_cast<float>(SCRHEIGHT-1100)));
+
+    //Directions for Type Name
+    sf::Text nameDirections("Step 2: If doing BFS, enter a name", font);
+    nameDirections.setColor(sf::Color::Black);
+    nameDirections.setCharacterSize(40);
+    nameDirections.setOrigin(0,0);
+    nameDirections.setPosition(sf::Vector2f(static_cast<float>((SCRWIDTH/2)-600),static_cast<float>(SCRHEIGHT-1050)));
+    //Directions for select number
+    sf::Text numDirections("Step 3: If doing BFS, select a max depth", font);
+    numDirections.setColor(sf::Color::Black);
+    numDirections.setCharacterSize(40);
+    numDirections.setOrigin(0,0);
+    numDirections.setPosition(sf::Vector2f(static_cast<float>((SCRWIDTH/2)-600),static_cast<float>(SCRHEIGHT-800)));
+
+
+    //Current number selected
+    sf::Text number("Current Number Selected: none", font);
+    number.setColor(sf::Color::Red);
+    number.setCharacterSize(40);
+    number.setOrigin(0,0);
+    number.setPosition(sf::Vector2f(static_cast<float>((SCRWIDTH/2)-600),static_cast<float>(SCRHEIGHT-650)));
+
+
+    //BFS BUTTON
+    Button bfsbtn("BFS", { 300, 100 }, 30, sf::Color::Green, sf::Color::Black);
+    bfsbtn.setFont(font);
+    bfsbtn.setPosition({ static_cast<float>((SCRWIDTH/2)-300), static_cast<float>(SCRHEIGHT-1200) });
+
+
+    //DJK BUTTON
+    Button djkbtn("Dijkstra", { 300, 100 }, 30, sf::Color::Green, sf::Color::Black);
+    djkbtn.setFont(font);
+    djkbtn.setPosition({ static_cast<float>((SCRWIDTH/2)-700), static_cast<float>(SCRHEIGHT-1200) });
+
+
+    //NUMBER BUTTONS
+    Button one("1", { 100, 100 }, 30, sf::Color::Green, sf::Color::Black);
+    one.setFont(font);
+    one.setPosition({ static_cast<float>((SCRWIDTH/2)-680), static_cast<float>(SCRHEIGHT-750) });
+    Button two("2", { 100, 100 }, 30, sf::Color::Green, sf::Color::Black);
+    two.setFont(font);
+    two.setPosition({ static_cast<float>((SCRWIDTH/2)-540), static_cast<float>(SCRHEIGHT-750) });
+    Button three("3", { 100, 100 }, 30, sf::Color::Green, sf::Color::Black);
+    three.setFont(font);
+    three.setPosition({ static_cast<float>((SCRWIDTH/2)-400), static_cast<float>(SCRHEIGHT-750) });
+    Button four("4", { 100, 100 }, 30, sf::Color::Green, sf::Color::Black);
+    four.setFont(font);
+    four.setPosition({ static_cast<float>((SCRWIDTH/2)-260), static_cast<float>(SCRHEIGHT-750) });
+    Button five("5", { 100, 100 }, 30, sf::Color::Green, sf::Color::Black);
+    five.setFont(font);
+    five.setPosition({ static_cast<float>((SCRWIDTH/2)-120), static_cast<float>(SCRHEIGHT-750) });
+
+    //ENTER BUTTON
+    Button btn1("Enter", { 200, 100 }, 30, sf::Color::Green, sf::Color::Black);
+    btn1.setFont(font);
+    btn1.setPosition({ static_cast<float>((SCRWIDTH/2)-200), static_cast<float>(SCRHEIGHT-600) });
+
+
+
+
+
+    //Window 2 Text
+    sf::Text wind2("This is the output window", font);
+    wind2.setColor(sf::Color::Black);
+    wind2.setCharacterSize(100);
+    wind2.setOrigin(0,0);
+    wind2.setPosition(sf::Vector2f(static_cast<float>((SCRWIDTH/2)),static_cast<float>(SCRHEIGHT-1500)));
+    sf::Text wind3("This is the output window", font);
+    wind3.setColor(sf::Color::Black);
+    wind3.setCharacterSize(100);
+    wind3.setOrigin(0,0);
+    wind3.setPosition(sf::Vector2f(static_cast<float>((SCRWIDTH/2)+500),static_cast<float>(SCRHEIGHT-1500)));
+    sf::Text wind4("10 Best Names", font);
+    wind4.setColor(sf::Color::Red);
+    wind4.setCharacterSize(40);
+    wind4.setOrigin(0,0);
+    wind4.setPosition(sf::Vector2f(static_cast<float>((SCRWIDTH/2)),static_cast<float>(SCRHEIGHT-2000)));
+    sf::Text wind5("10 Worst Names", font);
+    wind5.setColor(sf::Color::Red);
+    wind5.setCharacterSize(40);
+    wind5.setOrigin(0,0);
+    wind5.setPosition(sf::Vector2f(static_cast<float>((SCRWIDTH/2)+700),static_cast<float>(SCRHEIGHT-2000)));
+
+    sf::RectangleShape rect2;
+    rect2.setOrigin(0,0);
+    rect2.setFillColor(sf::Color::White);
+    rect2.setPosition({static_cast<float>((SCRWIDTH/2)), static_cast<float>(SCRHEIGHT-2000)});
+    rect2.setSize({1200,1500});
+
+
+
+    //GIRL AND BOY BABY IMAGES AND STORK
+    sf::Texture girlTexture;
+    girlTexture.loadFromFile("girlBaby.png");
+    sf::Sprite girl(girlTexture);
+    girl.setScale(0.4f, 0.4f);
+    sf::Vector2u size = girlTexture.getSize();
+    girl.setOrigin(0,size.y);
+    girl.setPosition(0,SCRHEIGHT-400);
+    sf::Texture boyTexture;
+    boyTexture.loadFromFile("boyBaby.png");
+    sf::Sprite boy(boyTexture);
+    sf::Vector2u size2 = boyTexture.getSize();
+    boy.setOrigin(0,size2.y);
+    boy.setPosition(SCRWIDTH-size2.x+400,SCRHEIGHT-400);
+    boy.setScale(0.4f, 0.4f);
+    sf::Texture storkTexture;
+    storkTexture.loadFromFile("Stork.png");
+    sf::Sprite stork(storkTexture);
+    stork.setScale(3.0f, 3.0f);
+    stork.setOrigin(0,0);
+    stork.setPosition(0,100);
+
+    //Main Loop:
+    while (window.isOpen()) {
+
+        sf::Event Event;
+
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Return)) {
+            text1.setSelected(true);
+        }
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
+            text1.setSelected(false);
+        }
+
+        //Event Loop:
+        while (window.pollEvent(Event)) {
+            switch (Event.type) {
+
+                case sf::Event::Closed:
+                    window.close();
+                case sf::Event::TextEntered:
+                    text1.typedOn(Event);
+                case sf::Event::MouseMoved:
+                    if (btn1.isMouseOver(window)) {
+                        btn1.setBackColor(sf::Color::Magenta);
+                    }
+                    else {
+                        btn1.setBackColor(sf::Color::Green);
+                    }
+                    if (djkbtn.isMouseOver(window)) {
+                        djkbtn.setBackColor(sf::Color::Magenta);
+                    }
+                    else {
+                        if (!djk) {
+                            djkbtn.setBackColor(sf::Color::Green);
+                        }
+                    }
+                    if (bfsbtn.isMouseOver(window)) {
+                        bfsbtn.setBackColor(sf::Color::Magenta);
+                    }
+                    else {
+                        if (!bfs) {
+                        bfsbtn.setBackColor(sf::Color::Green);
+                        }
+                    }
+                    if (one.isMouseOver(window)) {
+                        one.setBackColor(sf::Color::Magenta);
+                    }
+                    else {
+                        if (!one_) {
+                            one.setBackColor(sf::Color::Green);
+                        }
+                    }
+                    if (two.isMouseOver(window)) {
+                        two.setBackColor(sf::Color::Magenta);
+                    }
+                    else {
+                        if (!two_) {
+                            two.setBackColor(sf::Color::Green);
+                        }
+                    }
+                    if (three.isMouseOver(window)) {
+                        three.setBackColor(sf::Color::Magenta);
+                    }
+                    else {
+                        if (!three_) {
+                            three.setBackColor(sf::Color::Green);
+                        }
+                    }
+                    if (four.isMouseOver(window)) {
+                        four.setBackColor(sf::Color::Magenta);
+                    }
+                    else {
+                        if (!four_) {
+                            four.setBackColor(sf::Color::Green);
+                        }
+                    }
+                    if (five.isMouseOver(window)) {
+                        five.setBackColor(sf::Color::Magenta);
+                    }
+                    else {
+                        if (!five_) {
+                            five.setBackColor(sf::Color::Green);
+                        }
+                    }
+                    break;
+                case sf::Event::MouseButtonPressed:
+                    if (btn1.isMouseOver(window)) {
+                        input = text1.getText();
+                        enterPressed = true;
+                        if (bfs){
+                            optionChosen = "BFS";
+                            string q = "";
+                            string f = "";
+                            int maxD;
+                            if (one_){
+                                maxD = 1;
+                            } else if (two_){
+                                maxD = 2;
+                            } else if(three_){
+                                maxD = 3;
+                            } else if(four_){
+                                maxD = 4;
+                            } else if(five_){
+                                maxD = 5;
+                            }
+                            pair<User*, unsigned int> b = randomGraph.breadthFirstSearch(input, *(randomGraph.you), maxD);
+                            if (b.first != nullptr){
+                                q = "The name\n" + b.first->name + "\nis present in the graph.";
+                                f = "This name is " + to_string(b.second) + "\nconnection(s) away\nfrom you.";
+                            } else {
+                                q ="The name that you\nentered is not present\nwithin " + numberChosen + " connections.";
+
+                            }
+
+                            wind2.setString(q);
+                            wind2.setPosition(sf::Vector2f(static_cast<float>((SCRWIDTH/2)),static_cast<float>(SCRHEIGHT-1900)));
+                            wind3.setPosition(sf::Vector2f(static_cast<float>((SCRWIDTH/2)),static_cast<float>(SCRHEIGHT-1400)));
+                            wind3.setString(f);
+                        }
+                        if (djk){
+                            optionChosen = "DJK";
+                            vector <pair<User*, double>> g = randomGraph.dijkstra(*(randomGraph.you));
+                            string s = "";
+                            string h = "";
+                            for (int i = 0; i < 10; i++){
+                                s += g.at(i).first->name + "\n";
+                            }
+                            for (int i = 100; i > 90; i--){
+                                h += g.at(i).first->name + "\n";
+                            }
+                            wind2.setPosition(sf::Vector2f(static_cast<float>((SCRWIDTH/2)-100),static_cast<float>(SCRHEIGHT-1900)));
+                            wind3.setPosition(sf::Vector2f(static_cast<float>((SCRWIDTH/2)+600),static_cast<float>(SCRHEIGHT-1900)));
+                            wind2.setString(s);
+                            wind3.setString(h);
+                        }
+
+
+                    }
+                    if (bfsbtn.isMouseOver(window)) {
+                        bfs = true;
+                        djk = false;
+                        option.setString("Current Option Selected: BFS");
+                        bfsbtn.setBackColor(sf::Color::Magenta);
+
+                    }
+                    if (djkbtn.isMouseOver(window)) {
+                        djk = true;
+                        bfs= false;
+                        option.setString("Current Option Selected: Dijkstra's Algorithm");
+                        djkbtn.setBackColor(sf::Color::Magenta);
+                    }
+                    if (one.isMouseOver(window)) {
+                        one_ = true;
+                        two_ = false;
+                        three_ = false;
+                        four_ = false;
+                        five_ = false;
+                        numberChosen = "one";
+                        one.setBackColor(sf::Color::Magenta);
+                        number.setString("Current Number Selected: 1");
+
+                    }
+                    if (two.isMouseOver(window)) {
+                        one_ = false;
+                        two_ = true;
+                        three_ = false;
+                        four_ = false;
+                        five_ = false;
+                        numberChosen = "two";
+                        two.setBackColor(sf::Color::Magenta);
+                        number.setString("Current Number Selected: 2");
+
+                    }
+                    if (three.isMouseOver(window)) {
+                        one_ = false;
+                        two_ = false;
+                        three_ = true;
+                        four_ = false;
+                        five_ = false;
+                        numberChosen = "three";
+                        three.setBackColor(sf::Color::Magenta);
+                        number.setString("Current Number Selected: 3");
+
+                    }
+                    if (four.isMouseOver(window)) {
+                        one_ = false;
+                        two_ = false;
+                        three_ = false;
+                        four_ = true;
+                        five_ = false;
+                        numberChosen = "four";
+                        four.setBackColor(sf::Color::Magenta);
+                        number.setString("Current Number Selected: 4");
+
+                    }
+                    if (five.isMouseOver(window)) {
+                        one_ = false;
+                        two_ = false;
+                        three_ = false;
+                        four_ = false;
+                        five_ = true;
+                        numberChosen = "five";
+                        five.setBackColor(sf::Color::Magenta);
+                        number.setString("Current Number Selected: 5");
+
+                    }
+            }
+        }
+        if (!enterPressed) {
+            window.clear(sf::Color(230, 200, 255));
+            window.draw(rect);
+            text1.drawTo(window);
+            djkbtn.drawTo(window);
+            btn1.drawTo(window);
+            bfsbtn.drawTo(window);
+            one.drawTo(window);
+            two.drawTo(window);
+            three.drawTo(window);
+            four.drawTo(window);
+            five.drawTo(window);
+            window.draw(menu);
+            window.draw(girl);
+            window.draw(boy);
+            window.draw(option);
+            window.draw(optionDirections);
+            window.draw(nameDirections);
+            window.draw(numDirections);
+            window.draw(number);
+            window.display();
+        } else {
+
+            if (optionChosen == "BFS"){
+                window.clear(sf::Color(230, 200, 255));
+
+                window.draw(stork);
+                window.draw(rect2);
+                window.draw(wind2);
+                window.draw(wind3);
+                window.display();
+            }else if (optionChosen == "DJK"){
+                window.clear(sf::Color(230, 200, 255));
+                window.draw(stork);
+                window.draw(wind2);
+                window.draw(wind3);
+                window.draw(wind4);
+                window.draw(wind5);
+                window.display();
+            } else{
+                wind2.setString("You didn't choose an option. Close program and try again.");
+                window.clear(sf::Color(230, 200, 255));
+                window.draw(wind2);
+                window.draw(wind3);
+
+                window.display();
+            }
+
+
+        };
+    }
+
+}
+
+
+
+
+
+
+
