@@ -264,6 +264,9 @@ int main()
 	theg.insertEdge(G, I, 6);
 	theg.insertEdge(H, I, 7);
 	//Algo
+	//auto x = theg.breadthFirstSearch("I", A, 3);
+	//auto y = theg.breadthFirstSearch("E", A, 2);
+	//cout << endl;
 	auto vec = theg.dijkstra(A);
 	for (unsigned int i = 0; i < vec.size(); i++)
 	{
